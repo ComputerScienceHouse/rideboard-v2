@@ -94,7 +94,7 @@ async fn create_rider(
             .insert_job(RedisJob::Join(SimpleRiderChange {
                 event_id,
                 car_id,
-                rider_id: user_id,
+                target_id: user_id,
             }))
             .await
     }) {
@@ -153,7 +153,7 @@ async fn delete_rider(
             .insert_job(RedisJob::Leave(SimpleRiderChange {
                 event_id,
                 car_id,
-                rider_id: user_id,
+                target_id: user_id,
             }))
             .await
     }) {

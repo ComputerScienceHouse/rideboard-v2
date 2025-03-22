@@ -6,7 +6,7 @@ use utoipa::ToSchema;
 
 use crate::db::user::UserData;
 
-#[derive(Serialize, Deserialize, sqlx::FromRow, ToSchema)]
+#[derive(Serialize, Deserialize, sqlx::FromRow, ToSchema, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Event {
     pub id: i32,
@@ -15,6 +15,7 @@ pub struct Event {
     pub start_time: DateTime<Utc>,
     pub end_time: DateTime<Utc>,
     pub creator: UserData,
+    pub needs_ride: Vec<UserData>,
 }
 
 #[derive(Deserialize, ToSchema)]
@@ -60,8 +61,17 @@ impl Event {
                 INSERT INTO event (name, location, start_time, end_time, creator) VALUES ($1, $2, $3, $4, $5) RETURNING *
             )
             SELECT new_event.id, new_event.name, new_event.location, new_event.start_time, new_event.end_time,
-            (users.id, users.realm, users.name, users.email)::users AS "creator!: UserData"
-            FROM new_event LEFT JOIN users ON new_event.creator = users.id
+            ROW(creatorUsers.*)::users AS "creator!: UserData",
+            ARRAY_REMOVE(ARRAY_AGG(
+                CASE WHEN needRideUsers.id IS NOT NULL
+                THEN ROW(needRideUsers.*)::users
+                END
+            ), NULL) AS "needs_ride!: Vec<UserData>"
+            FROM new_event
+            JOIN users creatorUsers ON new_event.creator = creatorUsers.id
+            LEFT JOIN needs_ride ON new_event.id = needs_ride.event_id
+            LEFT JOIN users needRideUsers ON needs_ride.user_id = needRideUsers.id
+            GROUP BY new_event.id, new_event.name, new_event.location, new_event.start_time, new_event.end_time, creatorUsers.id
             "#,
             data.name, data.location, data.start_time, data.end_time, creator_id
         )
@@ -90,8 +100,17 @@ impl Event {
                 RETURNING *
             )
             SELECT new_event.id, new_event.name, new_event.location, new_event.start_time, new_event.end_time,
-            ROW(users.*)::users AS "creator!: UserData"
-            FROM new_event JOIN users ON new_event.creator = users.id
+            ROW(creatorUsers.*)::users AS "creator!: UserData",
+            ARRAY_REMOVE(ARRAY_AGG(
+                CASE WHEN needRideUsers.id IS NOT NULL
+                THEN ROW(needRideUsers.*)::users
+                END
+            ), NULL) AS "needs_ride!: Vec<UserData>"
+            FROM new_event
+            JOIN users creatorUsers ON new_event.creator = creatorUsers.id
+            LEFT JOIN needs_ride ON new_event.id = needs_ride.event_id
+            LEFT JOIN users needRideUsers ON needs_ride.user_id = needRideUsers.id
+            GROUP BY new_event.id, new_event.name, new_event.location, new_event.start_time, new_event.end_time, creatorUsers.id
             "#,
             data.name,
             data.location,
@@ -112,10 +131,18 @@ impl Event {
             r#"
             SELECT
             event.id, event.name, event.location, event.start_time, event.end_time,
-            ROW(users.*)::users AS "creator!: UserData"
+            ROW(creatorUsers.*)::users AS "creator!: UserData",
+            ARRAY_REMOVE(ARRAY_AGG(
+                CASE WHEN needRideUsers.id IS NOT NULL
+                THEN ROW(needRideUsers.*)::users
+                END
+            ), NULL) AS "needs_ride!: Vec<UserData>"
             FROM event
-            JOIN users ON users.id = event.creator
+            JOIN users creatorUsers ON event.creator = creatorUsers.id
+            LEFT JOIN needs_ride ON event.id = needs_ride.event_id
+            LEFT JOIN users needRideUsers ON needs_ride.user_id = needRideUsers.id
             WHERE (end_time >= NOW() AND $1 = False) OR (end_time < NOW() AND $1)
+            GROUP BY event.id, creatorUsers.id
             ORDER BY start_time ASC
             "#,
             past
@@ -133,10 +160,18 @@ impl Event {
             r#"
             SELECT
             event.id, event.name, event.location, event.start_time, event.end_time,
-            ROW(users.*)::users AS "creator!: UserData"
+            ROW(creatorUsers.*)::users AS "creator!: UserData",
+            ARRAY_REMOVE(ARRAY_AGG(
+                CASE WHEN needRideUsers.id IS NOT NULL
+                THEN ROW(needRideUsers.*)::users
+                END
+            ), NULL) AS "needs_ride!: Vec<UserData>"
             FROM event
-            JOIN users ON users.id = event.creator
+            JOIN users creatorUsers ON event.creator = creatorUsers.id
+            LEFT JOIN needs_ride ON event.id = needs_ride.event_id
+            LEFT JOIN users needRideUsers ON needs_ride.user_id = needRideUsers.id
             WHERE event.id = $1
+            GROUP BY event.id, creatorUsers.id
             "#,
             id
         )

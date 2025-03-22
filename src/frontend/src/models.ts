@@ -23,6 +23,7 @@ export interface Event {
   endTime: Date;
   creator: UserStub;
   cars?: Car[];
+  needsRide: UserStub[];
 }
 
 export interface Car {

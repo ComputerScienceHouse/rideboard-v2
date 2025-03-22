@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            WITH new_car AS (\n                INSERT INTO car (event_id, driver, max_capacity, departure_time, return_time, comment)\n                VALUES ($1, $2, $3, $4, $5, $6) RETURNING *\n            )\n            SELECT car.id, car.event_id, car.max_capacity, car.departure_time, car.return_time, car.comment,\n            ROW(driverUser.*)::users AS \"driver!: UserData\",\n            ARRAY_REMOVE(ARRAY_AGG(\n                CASE WHEN riderUser.id IS NOT NULL\n                THEN ROW(riderUser.*)::users\n                END\n            ), NULL) as \"riders!: Vec<UserData>\"\n            FROM car\n            JOIN users driverUser ON car.driver = driverUser.id\n            LEFT JOIN rider on car.id = rider.car_id\n            LEFT JOIN users riderUser ON rider.rider = riderUser.id\n            GROUP BY car.id, driverUser.id\n            ",
+  "query": "\n            WITH new_event AS (\n                INSERT INTO event (name, location, start_time, end_time, creator) VALUES ($1, $2, $3, $4, $5) RETURNING *\n            )\n            SELECT new_event.id, new_event.name, new_event.location, new_event.start_time, new_event.end_time,\n            ROW(creatorUsers.*)::users AS \"creator!: UserData\",\n            ARRAY_REMOVE(ARRAY_AGG(\n                CASE WHEN needRideUsers.id IS NOT NULL\n                THEN ROW(needRideUsers.*)::users\n                END\n            ), NULL) AS \"needs_ride!: Vec<UserData>\"\n            FROM new_event\n            JOIN users creatorUsers ON new_event.creator = creatorUsers.id\n            LEFT JOIN needs_ride ON new_event.id = needs_ride.event_id\n            LEFT JOIN users needRideUsers ON needs_ride.user_id = needRideUsers.id\n            GROUP BY new_event.id, new_event.name, new_event.location, new_event.start_time, new_event.end_time, creatorUsers.id\n            ",
   "describe": {
     "columns": [
       {
@@ -10,32 +10,27 @@
       },
       {
         "ordinal": 1,
-        "name": "event_id",
-        "type_info": "Int4"
+        "name": "name",
+        "type_info": "Varchar"
       },
       {
         "ordinal": 2,
-        "name": "max_capacity",
-        "type_info": "Int4"
+        "name": "location",
+        "type_info": "Varchar"
       },
       {
         "ordinal": 3,
-        "name": "departure_time",
+        "name": "start_time",
         "type_info": "Timestamptz"
       },
       {
         "ordinal": 4,
-        "name": "return_time",
+        "name": "end_time",
         "type_info": "Timestamptz"
       },
       {
         "ordinal": 5,
-        "name": "comment",
-        "type_info": "Varchar"
-      },
-      {
-        "ordinal": 6,
-        "name": "driver!: UserData",
+        "name": "creator!: UserData",
         "type_info": {
           "Custom": {
             "name": "users",
@@ -73,8 +68,8 @@
         }
       },
       {
-        "ordinal": 7,
-        "name": "riders!: Vec<UserData>",
+        "ordinal": 6,
+        "name": "needs_ride!: Vec<UserData>",
         "type_info": {
           "Custom": {
             "name": "users[]",
@@ -121,9 +116,8 @@
     ],
     "parameters": {
       "Left": [
-        "Int4",
         "Varchar",
-        "Int4",
+        "Varchar",
         "Timestamptz",
         "Timestamptz",
         "Varchar"
@@ -131,7 +125,6 @@
     },
     "nullable": [
       false,
-      true,
       false,
       false,
       false,
@@ -140,5 +133,5 @@
       null
     ]
   },
-  "hash": "c8d5936687078027d4eade18f615126dcea8a4d098ad7a0ee8b84f6cb05f8b20"
+  "hash": "799b2cf14916af1073a9ba23a2b751be0fa0d504d2de3a9f542942ea8e808d96"
 }

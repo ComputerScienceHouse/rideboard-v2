@@ -40,6 +40,11 @@ export default defineComponent({
             name: authStore.user!.given_name + ' ' + authStore.user!.family_name,
             email: authStore.user!.email!
           });
+
+        let needRideIndex = eventStore.selectedEvent?.needsRide.findIndex((user) => user.id === authStore.user?.id);
+        if (needRideIndex !== undefined && needRideIndex !== -1) {
+          eventStore.selectedEvent?.needsRide.splice(needRideIndex, 1);
+        }
         popupStore.addPopup(PopupType.Success, 'You have been added!');
       } catch (error) {
         console.error(error);

@@ -21,8 +21,9 @@ import EditCarButton from './EditCarButton.vue';
           <h5><b>End: </b>{{ endTime }}</h5>
         </div>
         <h5 class="card-text" v-else>{{ startTime }} - {{ endTime }}</h5>
+        <NeedsRideButton />
       </div>
-      <div class="mt-4">
+      <div class="mt-4 mb-3">
         <div class="d-flex justify-content-between align-items-center">
           <h4 class="mr-1">Cars</h4>
           <div v-if="!historyMode">
@@ -31,9 +32,20 @@ import EditCarButton from './EditCarButton.vue';
           </div>
         </div>
         <CarTable :eventId="event?.id" :key="event?.id" />
+        <h4 class="mr-1">Need a Ride</h4>
+        <div v-if="event?.needsRide.length === 0">
+          <p><i>No one needs a ride</i></p>
+        </div>
+        <div v-else>
+          <ul class="no-bullets">
+            <li v-for="(user, index) in event?.needsRide" :key="index">
+              {{ user.name }} ({{ user.email }})
+            </li>
+          </ul>
+        </div>
       </div>
       <EditEventButton v-if="userOwnsEvent && !historyMode" />
-      <div>
+      <div class="mt-3">
         <i>Created by {{ event?.creator.name }}</i>
       </div>
     </div>
@@ -47,6 +59,7 @@ import { format } from 'date-fns';
 import { useAuthStore } from '@/stores/auth';
 import { useScreenStore } from '@/stores/screen';
 import { useEventStore } from '@/stores/events';
+import NeedsRideButton from './NeedsRideButton.vue';
 
 export default defineComponent({
   props: {

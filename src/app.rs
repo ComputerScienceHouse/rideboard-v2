@@ -47,7 +47,7 @@ impl From<Vec<String>> for ApiError {
 pub struct SimpleRiderChange {
     pub event_id: i32,
     pub car_id: i32,
-    pub rider_id: String,
+    pub target_id: String,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -64,4 +64,5 @@ pub enum RedisJob {
     Join(SimpleRiderChange),
     Leave(SimpleRiderChange),
     RiderUpdate(MultipleRiderChange),
+    Opening(SimpleRiderChange),
 }

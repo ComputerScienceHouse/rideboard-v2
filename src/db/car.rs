@@ -93,18 +93,18 @@ impl Car {
                 INSERT INTO car (event_id, driver, max_capacity, departure_time, return_time, comment)
                 VALUES ($1, $2, $3, $4, $5, $6) RETURNING *
             )
-            SELECT car.id, car.event_id, car.max_capacity, car.departure_time, car.return_time, car.comment,
+            SELECT new_car.id, new_car.event_id, new_car.max_capacity, new_car.departure_time, new_car.return_time, new_car.comment,
             ROW(driverUser.*)::users AS "driver!: UserData",
             ARRAY_REMOVE(ARRAY_AGG(
                 CASE WHEN riderUser.id IS NOT NULL
                 THEN ROW(riderUser.*)::users
                 END
             ), NULL) as "riders!: Vec<UserData>"
-            FROM car
-            JOIN users driverUser ON car.driver = driverUser.id
-            LEFT JOIN rider on car.id = rider.car_id
+            FROM new_car
+            JOIN users driverUser ON new_car.driver = driverUser.id
+            LEFT JOIN rider on new_car.id = rider.car_id
             LEFT JOIN users riderUser ON rider.rider = riderUser.id
-            GROUP BY car.id, driverUser.id
+            GROUP BY new_car.id, new_car.event_id, new_car.max_capacity, new_car.departure_time, new_car.return_time, new_car.comment, driveruser.id
             "#,
             event_id,
             driver_id,

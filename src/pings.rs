@@ -97,4 +97,19 @@ impl PingClient {
             .await?;
         Ok(())
     }
+
+    pub async fn send_opening(&self, to: &str, driver: &str, event: &str) -> Result<()> {
+        self.client
+            .post(format!(
+                "https://pings.csh.rit.edu/service/route/{}/ping",
+                self.remove_route
+            ))
+            .json(&json!({
+                "username": to,
+                "body": format!("{driver} has an opening in their ride to \"{event}\"!")
+            }))
+            .send()
+            .await?;
+        Ok(())
+    }
 }
