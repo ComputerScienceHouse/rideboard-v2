@@ -11,13 +11,6 @@ pub struct NeedsRide {
 }
 
 impl NeedsRide {
-    pub fn validate(&self) -> Result<(), Vec<String>> {
-        //let mut errs = Vec::new();
-        Ok(())
-    }
-}
-
-impl NeedsRide {
     pub async fn insert_new<'c, C>(user_id: String, event_id: i32, conn: C) -> Result<Self>
     where
         C: Executor<'c, Database = Postgres>,
