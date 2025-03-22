@@ -133,7 +133,7 @@ export default defineComponent({
             name: authStore.user!.given_name + ' ' + authStore.user!.family_name,
             email: authStore.user!.email!
           },
-          needsRide: [],
+          needsRide: []
         };
         eventStore.addEvent(newEvent);
         eventStore.selectEvent(newEvent);

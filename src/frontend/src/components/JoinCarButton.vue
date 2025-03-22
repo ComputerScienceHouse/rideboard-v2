@@ -41,7 +41,9 @@ export default defineComponent({
             email: authStore.user!.email!
           });
 
-        let needRideIndex = eventStore.selectedEvent?.needsRide.findIndex((user) => user.id === authStore.user?.id);
+        let needRideIndex = eventStore.selectedEvent?.needsRide.findIndex(
+          (user) => user.id === authStore.user?.id
+        );
         if (needRideIndex !== undefined && needRideIndex !== -1) {
           eventStore.selectedEvent?.needsRide.splice(needRideIndex, 1);
         }

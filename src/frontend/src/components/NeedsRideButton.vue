@@ -4,23 +4,22 @@ import BellSlash from './icons/BellSlash.vue';
 </script>
 
 <template>
-    <button
-      type="button"
-      class="btn btn-danger mb-2"
-      @click="sendDataRemove"
-      v-if="userInNeedsRide"
-    >
-      <BellSlash style="vertical-align: text-top;"/> No Longer Need Ride ({{ eventStore.selectedEvent?.needsRide.length }})
-    </button>
-    <button
-      type="button"
-      class="btn btn-primary mb-2"
-      @click="sendDataAdd"
-      :disabled="userInCar"
-      v-else
-    >
-      <BellAlert style="vertical-align: text-top;"/> Need Ride ({{ eventStore.selectedEvent?.needsRide.length }})
-    </button>
+  <button type="button" class="btn btn-danger mb-2" @click="sendDataRemove" v-if="userInNeedsRide">
+    <BellSlash style="vertical-align: text-top" /> No Longer Need Ride ({{
+      eventStore.selectedEvent?.needsRide.length
+    }})
+  </button>
+  <button
+    type="button"
+    class="btn btn-primary mb-2"
+    @click="sendDataAdd"
+    :disabled="userInCar"
+    v-else
+  >
+    <BellAlert style="vertical-align: text-top" /> Need Ride ({{
+      eventStore.selectedEvent?.needsRide.length
+    }})
+  </button>
 </template>
 
 <script lang="ts">
@@ -34,17 +33,21 @@ export default defineComponent({
   data() {
     return {
       authStore: useAuthStore(),
-      eventStore: useEventStore(),
+      eventStore: useEventStore()
     };
   },
   computed: {
     userInCar() {
       let allCars = this.eventStore.selectedEvent?.cars;
       let userId = this.authStore.user?.id;
-      return allCars!.some((car) => car.riders.some((rider) => rider.id === userId) || car.driver.id === userId);
+      return allCars!.some(
+        (car) => car.riders.some((rider) => rider.id === userId) || car.driver.id === userId
+      );
     },
     userInNeedsRide() {
-      return this.eventStore.selectedEvent?.needsRide.some((user) => user.id === this.authStore.user?.id);
+      return this.eventStore.selectedEvent?.needsRide.some(
+        (user) => user.id === this.authStore.user?.id
+      );
     }
   },
   methods: {
@@ -66,11 +69,17 @@ export default defineComponent({
             email: this.authStore.user!.email!
           });
         } else {
-          popupStore.addPopup(PopupType.Danger, `Failed to Add to Need Ride List (${response.status})`);
+          popupStore.addPopup(
+            PopupType.Danger,
+            `Failed to Add to Need Ride List (${response.status})`
+          );
         }
       } catch (error) {
         console.error(error);
-        popupStore.addPopup(PopupType.Danger, 'Failed to Add to Need Ride List. An unknown error occured.');
+        popupStore.addPopup(
+          PopupType.Danger,
+          'Failed to Add to Need Ride List. An unknown error occured.'
+        );
       }
     },
     async sendDataRemove() {
@@ -85,17 +94,25 @@ export default defineComponent({
         if (response.ok) {
           popupStore.addPopup(PopupType.Success, 'Removed from Need Ride List!');
           this.eventStore.selectedEvent?.needsRide.splice(
-            this.eventStore.selectedEvent?.needsRide.findIndex((user) => user.id === this.authStore.user?.id),
+            this.eventStore.selectedEvent?.needsRide.findIndex(
+              (user) => user.id === this.authStore.user?.id
+            ),
             1
           );
         } else {
-          popupStore.addPopup(PopupType.Danger, `Failed to Removed from Need Ride List (${response.status})`);
+          popupStore.addPopup(
+            PopupType.Danger,
+            `Failed to Removed from Need Ride List (${response.status})`
+          );
         }
       } catch (error) {
         console.error(error);
-        popupStore.addPopup(PopupType.Danger, 'Failed to Removed from Need Ride List. An unknown error occured.');
+        popupStore.addPopup(
+          PopupType.Danger,
+          'Failed to Removed from Need Ride List. An unknown error occured.'
+        );
       }
     }
-  },
+  }
 });
 </script>
