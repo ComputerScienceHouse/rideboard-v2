@@ -2,15 +2,18 @@ use std::{collections::HashSet, env};
 
 use anyhow::{anyhow, Result};
 use log::error;
-use redis::{aio::MultiplexedConnection, RedisResult};
 use redis_work_queue::{Item, KeyPrefix, WorkQueue};
-use sqlx::{postgres::PgPoolOptions, query, query_as, Pool, Postgres};
-use std::time::Duration;
+use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 
 use crate::{
     app::{RedisJob, SimpleRiderChange},
-    db::user::{UserData, UserRealm},
+    db::{
+        car::Car,
+        event::Event,
+        user::{UserData, UserRealm},
+    },
     pings::PingClient,
+    redis::RedisQueue,
 };
 
 struct RedisError {
@@ -25,6 +28,11 @@ pub async fn main() -> Result<()> {
 
     let work_queue = WorkQueue::new(KeyPrefix::from("rideboard"));
 
+    let queue = RedisQueue {
+        redis: db.clone(),
+        work_queue,
+    };
+
     let db_pool = PgPoolOptions::new()
         .max_connections(5)
         .connect(&env::var("DATABASE_URL").expect("DATABASE_URL must be set"))
@@ -38,66 +46,55 @@ pub async fn main() -> Result<()> {
         env::var("PINGS_REMOVE_ROUTE").expect("PINGS_REMOVE_ROUTE must be set"),
     )?;
 
-    work_loop(db, work_queue, db_pool, pings).await?;
+    work_loop(queue, db_pool, pings).await?;
     Ok(())
-}
-
-async fn get_event_name(event_id: i32, db_pool: &Pool<Postgres>) -> Result<String> {
-    match query!(r#"SELECT name FROM event WHERE id = $1"#, event_id)
-        .fetch_one(db_pool)
-        .await
-    {
-        Ok(event) => Ok(event.name),
-        Err(err) => Err(anyhow!("Failed to get event name: {}", err)),
-    }
-}
-
-async fn get_driver(car_id: i32, db_pool: &Pool<Postgres>) -> Result<UserData> {
-    query_as!(
-        UserData,
-        r#"
-        SELECT users.id AS "id!", users.realm AS "realm!: UserRealm", users.name AS "name!", users.email AS "email!"
-        FROM car JOIN users ON car.driver = users.id WHERE car.id = $1;
-        "#, car_id
-    ).fetch_one(db_pool).await.map_err(|err| anyhow!("Failed to get driver: {}", err))
 }
 
 async fn get_simple_data(
     data: SimpleRiderChange,
     db_pool: &Pool<Postgres>,
-) -> Result<(String, UserData, UserData)> {
-    let rider = UserData::select_one(data.rider_id, db_pool)
+) -> Result<(Event, Car, UserData)> {
+    let rider = UserData::select_one(data.target_id, db_pool)
         .await?
         .ok_or(anyhow!("Rider does not exist"))?;
     Ok((
-        get_event_name(data.event_id, db_pool).await?,
-        get_driver(data.car_id, db_pool).await?,
+        Event::select_one(data.event_id, db_pool)
+            .await?
+            .ok_or(anyhow!("Event does not exist"))?,
+        Car::select_one(data.event_id, data.car_id, db_pool)
+            .await?
+            .ok_or(anyhow!("Car does not exist"))?,
         rider,
     ))
 }
 
-async fn work(job: &Item, db_pool: &Pool<Postgres>, pings: &PingClient) -> Result<(), RedisError> {
+async fn work(
+    job: &Item,
+    db_pool: &Pool<Postgres>,
+    pings: &PingClient,
+    queue: &mut RedisQueue,
+) -> Result<(), RedisError> {
     let job_data: RedisJob = job.data_json().map_err(|_err| RedisError {
         msg: "Failed to Parse into Job".to_string(),
         should_retry: false,
     })?;
     match job_data {
         RedisJob::Join(data) => {
-            let (event_name, driver, rider) =
+            let (event, car, rider) =
                 get_simple_data(data, db_pool)
                     .await
                     .map_err(|err| RedisError {
                         msg: err.to_string(),
                         should_retry: false,
                     })?;
-            if driver.realm != UserRealm::Csh {
+            if car.driver.realm != UserRealm::Csh {
                 return Ok(());
             }
             pings
                 .send_join(
-                    driver.email.trim_end_matches("@csh.rit.edu"),
+                    car.driver.email.trim_end_matches("@csh.rit.edu"),
                     &rider.name,
-                    &event_name,
+                    &event.name,
                 )
                 .await
                 .map_err(|err| RedisError {
@@ -106,40 +103,61 @@ async fn work(job: &Item, db_pool: &Pool<Postgres>, pings: &PingClient) -> Resul
                 })?
         }
         RedisJob::Leave(data) => {
-            let (event_name, driver, rider) =
+            let (event, car, rider) =
                 get_simple_data(data, db_pool)
                     .await
                     .map_err(|err| RedisError {
                         msg: err.to_string(),
                         should_retry: false,
                     })?;
-            if driver.realm != UserRealm::Csh {
+            if car.driver.realm != UserRealm::Csh {
                 return Ok(());
             }
             pings
                 .send_leave(
-                    driver.email.trim_end_matches("@csh.rit.edu"),
+                    car.driver.email.trim_end_matches("@csh.rit.edu"),
                     &rider.name,
-                    &event_name,
+                    &event.name,
                 )
                 .await
                 .map_err(|err| RedisError {
                     msg: err.to_string(),
                     should_retry: true,
                 })?;
+            for rider in &event.needs_ride {
+                queue
+                    .insert_job(RedisJob::Opening(SimpleRiderChange {
+                        event_id: event.id,
+                        car_id: car.id,
+                        target_id: rider.id.clone(),
+                    }))
+                    .await
+                    .map_err(|err| RedisError {
+                        msg: err.to_string(),
+                        should_retry: false,
+                    })?;
+            }
         }
         RedisJob::RiderUpdate(data) => {
-            let event_name = get_event_name(data.event_id, db_pool)
+            let event = Event::select_one(data.event_id, db_pool)
                 .await
                 .map_err(|err| RedisError {
                     msg: err.to_string(),
                     should_retry: true,
+                })?
+                .ok_or(RedisError {
+                    msg: "Event was missing from db.".to_string(),
+                    should_retry: false,
                 })?;
-            let driver = get_driver(data.car_id, db_pool)
+            let car = Car::select_one(data.event_id, data.car_id, db_pool)
                 .await
                 .map_err(|err| RedisError {
                     msg: err.to_string(),
                     should_retry: true,
+                })?
+                .ok_or(RedisError {
+                    msg: "Car was missing from db.".to_string(),
+                    should_retry: false,
                 })?;
             let old_set: HashSet<String> = HashSet::from_iter(data.old_riders);
             let new_set: HashSet<String> = HashSet::from_iter(data.new_riders);
@@ -167,8 +185,8 @@ async fn work(job: &Item, db_pool: &Pool<Postgres>, pings: &PingClient) -> Resul
                 pings
                     .send_remove(
                         user.email.trim_end_matches("@csh.rit.edu"),
-                        &driver.name,
-                        &event_name,
+                        &car.driver.name,
+                        &event.name,
                     )
                     .await
                     .map_err(|err| RedisError {
@@ -187,8 +205,8 @@ async fn work(job: &Item, db_pool: &Pool<Postgres>, pings: &PingClient) -> Resul
                 pings
                     .send_add(
                         user.email.trim_end_matches("@csh.rit.edu"),
-                        &driver.name,
-                        &event_name,
+                        &car.driver.name,
+                        &event.name,
                     )
                     .await
                     .map_err(|err| RedisError {
@@ -196,33 +214,68 @@ async fn work(job: &Item, db_pool: &Pool<Postgres>, pings: &PingClient) -> Resul
                         should_retry: true,
                     })?;
             }
+            let current_capacity = car.riders.map(|riders| riders.len()).unwrap_or(0) as i32;
+            if current_capacity < car.max_capacity {
+                for rider in &event.needs_ride {
+                    queue
+                        .insert_job(RedisJob::Opening(SimpleRiderChange {
+                            event_id: event.id,
+                            car_id: car.id,
+                            target_id: rider.id.clone(),
+                        }))
+                        .await
+                        .map_err(|err| RedisError {
+                            msg: err.to_string(),
+                            should_retry: false,
+                        })?;
+                }
+            }
+        }
+        RedisJob::Opening(data) => {
+            let (event, car, needs_ride) =
+                get_simple_data(data, db_pool)
+                    .await
+                    .map_err(|err| RedisError {
+                        msg: err.to_string(),
+                        should_retry: false,
+                    })?;
+            if needs_ride.realm != UserRealm::Csh {
+                return Ok(());
+            }
+            pings
+                .send_opening(
+                    needs_ride.email.trim_end_matches("@csh.rit.edu"),
+                    &car.driver.name,
+                    &event.name,
+                )
+                .await
+                .map_err(|err| RedisError {
+                    msg: err.to_string(),
+                    should_retry: true,
+                })?;
         }
     }
     Ok(())
 }
 
 pub async fn work_loop(
-    mut db: MultiplexedConnection,
-    work_queue: WorkQueue,
+    mut queue: RedisQueue,
     db_pool: Pool<Postgres>,
     pings: PingClient,
-) -> RedisResult<()> {
+) -> Result<()> {
     loop {
         // Wait for a job with no timeout and a lease time of 5 seconds.
-        let job: Item = match work_queue
-            .lease(&mut db, None, Duration::from_secs(5))
-            .await?
-        {
-            Some(job) => job,
-            None => {
-                error!("Failed to get job.");
+        let job: Item = match queue.get_job().await {
+            Ok(job) => job,
+            Err(err) => {
+                error!("{}", err);
                 continue;
             }
         };
-        match work(&job, &db_pool, &pings).await {
+        match work(&job, &db_pool, &pings, &mut queue).await {
             // Mark successful jobs as complete
             Ok(()) => {
-                work_queue.complete(&mut db, &job).await?;
+                queue.complete(&job).await?;
             }
             // Drop a job that should be retried - it will be returned to the work queue after
             // the (5 second) lease expires.
@@ -231,7 +284,7 @@ pub async fn work_loop(
             // tried again.
             Err(err) => {
                 error!("{}", err.msg);
-                work_queue.complete(&mut db, &job).await?;
+                queue.complete(&job).await?;
             }
         }
     }

@@ -132,7 +132,8 @@ export default defineComponent({
             realm: authStore.user!.type,
             name: authStore.user!.given_name + ' ' + authStore.user!.family_name,
             email: authStore.user!.email!
-          }
+          },
+          needsRide: []
         };
         eventStore.addEvent(newEvent);
         eventStore.selectEvent(newEvent);

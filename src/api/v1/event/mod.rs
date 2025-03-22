@@ -213,6 +213,90 @@ async fn delete_event(
     }
 }
 
+#[utoipa::path(
+    responses(
+        (status = 200, description = "Added to Need Ride"),
+        (status = 401, body = ApiError),
+        (status = 404, body = ApiError),
+        (status = 500, body = ApiError),
+    )
+)]
+#[post("/{event_id}/needride", wrap = "SessionAuth")]
+async fn need_ride(
+    data: web::Data<AppState>,
+    session: Session,
+    path: web::Path<i32>,
+) -> impl Responder {
+    let event_id = path.into_inner();
+    let user_id = match session.get::<UserInfo>("userinfo").ok().flatten() {
+        Some(user) => user.id,
+        None => {
+            return HttpResponse::Unauthorized().json(ApiError::from(
+                "Failed to get user data from session".to_string(),
+            ))
+        }
+    };
+
+    match crate::db::car::Car::user_in_car(event_id, &user_id, &data.db).await {
+        Ok(true) => {
+            return HttpResponse::BadRequest()
+                .json(ApiError::from("User is already in a car.".to_string()))
+        }
+        Ok(false) => {}
+        Err(err) => {
+            error!("{}", err);
+            return HttpResponse::InternalServerError().json(ApiError::from(
+                "Failed to check user's occupancy in other cars".to_string(),
+            ));
+        }
+    }
+
+    match crate::db::needs_ride::NeedsRide::insert_new(user_id, event_id, &data.db).await {
+        Ok(item) => HttpResponse::Ok().json(item),
+        Err(err) => {
+            error!("{}", err);
+            HttpResponse::InternalServerError().json(ApiError::from(
+                "Failed to add user to need ride list".to_string(),
+            ))
+        }
+    }
+}
+
+#[utoipa::path(
+    responses(
+        (status = 200, description = "Removed from Need Ride"),
+        (status = 401, body = ApiError),
+        (status = 404, body = ApiError),
+        (status = 500, body = ApiError),
+    )
+)]
+#[delete("/{event_id}/needride", wrap = "SessionAuth")]
+async fn remove_need_ride(
+    data: web::Data<AppState>,
+    session: Session,
+    path: web::Path<i32>,
+) -> impl Responder {
+    let event_id = path.into_inner();
+    let user_id = match session.get::<UserInfo>("userinfo").ok().flatten() {
+        Some(user) => user.id,
+        None => {
+            return HttpResponse::Unauthorized().json(ApiError::from(
+                "Failed to get user data from session".to_string(),
+            ));
+        }
+    };
+
+    match crate::db::needs_ride::NeedsRide::delete(user_id, event_id, &data.db).await {
+        Ok(_) => HttpResponse::Ok().body("Removed from need ride list"),
+        Err(err) => {
+            error!("{}", err);
+            HttpResponse::InternalServerError().json(ApiError::from(
+                "Failed to remove user from need ride list".to_string(),
+            ))
+        }
+    }
+}
+
 pub fn scope() -> Scope {
     web::scope("/event")
         .service(create_event)
@@ -220,5 +304,7 @@ pub fn scope() -> Scope {
         .service(get_all_events)
         .service(update_event)
         .service(delete_event)
+        .service(need_ride)
+        .service(remove_need_ride)
         .service(car::scope())
 }

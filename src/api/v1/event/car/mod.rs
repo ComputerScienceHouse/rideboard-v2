@@ -1,6 +1,7 @@
 use crate::api::v1::auth::models::UserInfo;
-use crate::app::{ApiError, AppState, MultipleRiderChange, RedisJob};
+use crate::app::{ApiError, AppState, MultipleRiderChange, RedisJob, SimpleRiderChange};
 use crate::db::car::{Car, CarData};
+use crate::db::needs_ride::NeedsRide;
 use crate::{auth::SessionAuth, db::user::UserData};
 use actix_session::Session;
 use actix_web::{
@@ -112,8 +113,22 @@ async fn create_car(
         return HttpResponse::InternalServerError()
             .json(ApiError::from("Failed to commit transaction".to_string()));
     }
+
+    let all_needs_ride = if (car.riders.len() as i32) < car.max_capacity {
+        Vec::new()
+    } else {
+        match NeedsRide::select_all(event_id, &data.db).await {
+            Ok(needs_ride) => needs_ride,
+            Err(err) => {
+                error!("Failed to get users that need ride: {}", err);
+                Vec::new()
+            }
+        }
+    };
+
     match data.redis.lock().map(|mut mutex| async move {
-        mutex
+        let mut errs = Vec::new();
+        if let Err(err) = mutex
             .insert_job(RedisJob::RiderUpdate(MultipleRiderChange {
                 event_id,
                 car_id: record.id,
@@ -121,14 +136,40 @@ async fn create_car(
                 new_riders: car.riders.clone(),
             }))
             .await
+        {
+            errs.push(format!("Notify Rider Update: {}", err));
+        }
+
+        if car.riders.len() as i32 == car.max_capacity {
+            return errs;
+        }
+
+        for needs_ride in all_needs_ride {
+            if let Err(err) = mutex
+                .insert_job(RedisJob::Opening(SimpleRiderChange {
+                    event_id,
+                    car_id: record.id,
+                    target_id: needs_ride.user_id.clone(),
+                }))
+                .await
+            {
+                errs.push(format!(
+                    "Notify Opening Needs Ride User {}: {}",
+                    needs_ride.user_id, err
+                ));
+            }
+        }
+
+        errs
     }) {
-        Ok(res) => {
-            if let Err(err) = res.await {
+        Ok(errs) => {
+            for err in errs.await {
                 error!("{}", err);
             }
         }
         Err(err) => error!("{}", err),
     }
+
     HttpResponse::Ok().json(record.id)
 }
 
