@@ -76,6 +76,9 @@ export default defineComponent({
 </script>
 
 <style>
+.table {
+  white-space: normal;
+}
 .collapse-enter-active,
 .collapse-leave-active {
   transition: all 0.35s ease;
