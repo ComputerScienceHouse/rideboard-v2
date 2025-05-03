@@ -1,8 +1,8 @@
-use std::{collections::HashSet, env, thread, time};
 use anyhow::{anyhow, Result};
 use log::error;
 use redis_work_queue::{Item, KeyPrefix, WorkQueue};
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
+use std::{collections::HashSet, env, thread, time};
 
 use crate::{
     app::{RedisJob, SimpleRiderChange},
