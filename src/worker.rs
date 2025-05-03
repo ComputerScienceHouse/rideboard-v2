@@ -268,7 +268,7 @@ pub async fn work_loop(
         let job: Item = match queue.get_job().await {
             Ok(job) => job,
             Err(err) => {
-                error!("{}", err);
+                error!("Failed to Get Job: {}", err);
                 continue;
             }
         };
@@ -279,11 +279,11 @@ pub async fn work_loop(
             }
             // Drop a job that should be retried - it will be returned to the work queue after
             // the (5 second) lease expires.
-            Err(err) if err.should_retry => error!("{}", err.msg),
+            Err(err) if err.should_retry => error!("Job Failed: {}, Retrying", err.msg),
             // Errors that shouldn't cause a retry should mark the job as complete so it isn't
             // tried again.
             Err(err) => {
-                error!("{}", err.msg);
+                error!("Job Failed: {}, Not Retrying", err.msg);
                 queue.complete(&job).await?;
             }
         }
