@@ -119,15 +119,7 @@ async fn get_all_events(
     let result = crate::db::event::Event::select_all(past, &data.db).await;
 
     match result {
-        Ok(events) => {
-            if past {
-                let reversed : Vec<&Event> = events.iter().rev().collect();
-
-                return HttpResponse::Ok().json(reversed);
-            }
-
-            HttpResponse::Ok().json(events)
-        },
+        Ok(events) => HttpResponse::Ok().json(events),
         Err(e) => {
             error!("{}", e);
             HttpResponse::InternalServerError()
