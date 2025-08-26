@@ -136,6 +136,7 @@ export default defineComponent({
           needsRide: []
         };
         eventStore.addEvent(newEvent);
+        eventStore.sortEvents(false);
         eventStore.selectEvent(newEvent);
 
         popupStore.addPopup(PopupType.Success, 'Event Created!');

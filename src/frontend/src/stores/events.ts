@@ -16,11 +16,16 @@ export const useEventStore = defineStore('events', {
   actions: {
     addEvent(event: Event) {
       this.events.push(event);
-      this.events.sort(sortByStartDate);
     },
     setEvents(events: Event[]) {
       this.events = events;
+    },
+    sortEvents(past: Boolean) {
       this.events.sort(sortByStartDate);
+
+      if (past) {
+          this.events.reverse();
+      }
     },
     removeEvent(event: Event | null) {
       if (event == null) {

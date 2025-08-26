@@ -88,6 +88,7 @@ export default defineComponent({
         const data = await response.json();
         const eventStore = useEventStore();
         eventStore.setEvents(data);
+        eventStore.sortEvents(this.showPast);
         eventStore.selectedEvent = null;
         this.loading = false;
       } catch (error) {
