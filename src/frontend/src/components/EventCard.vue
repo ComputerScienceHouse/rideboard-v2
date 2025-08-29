@@ -4,7 +4,7 @@ import { RouterLink } from 'vue-router';
 </script>
 
 <template>
-  <RouterLink :to="'/' + $props.event?.id" class="card mb-3">
+  <RouterLink :to="eventPath" class="card mb-3">
     <div class="card-body d-flex justify-content-between align-items-center">
       <div>
         <h5 class="card-title">{{ event!.name }}</h5>
@@ -23,7 +23,8 @@ import { useScreenStore } from '@/stores/screen';
 
 export default defineComponent({
   props: {
-    event: Object as PropType<Event>
+    event: Object as PropType<Event>,
+    isInPast: Boolean,
   },
   data() {
     let screenStore = useScreenStore();
@@ -35,6 +36,12 @@ export default defineComponent({
     formattedStart() {
       let data = this.event?.startTime.toLocaleString();
       return data ? format(data, 'MM/dd/yyyy hh:mm a') : 'N/A';
+    },
+    eventPath() {
+      if (this.$props.isInPast) {
+        return `/history/${this.$props.event?.id}`;
+      }
+      else return `${this.$props.event?.id}`;
     }
   }
 });

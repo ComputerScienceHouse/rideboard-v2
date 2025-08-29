@@ -35,7 +35,18 @@ const router = createRouter({
       path: '/history',
       name: 'history',
       component: HomeView,
-      props: { showPast: true }
+      props: { showPast: true },
+      children: [
+        {
+          path: '',
+          component: NoEventDetails,
+        },
+        {
+          path: ':id',
+          component: EventDetails,
+          props: true,
+        }
+      ]
     }
   ]
 });

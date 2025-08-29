@@ -28,6 +28,7 @@ const eventStore = useEventStore();
               v-for="(event, index) in eventStore.events"
               :event="event"
               :key="index"
+              :is-in-past="showPast"
             />
             <CreateEventButton v-if="!showPast" />
           </div>
