@@ -46,7 +46,7 @@ export default defineComponent({
       const popupStore = usePopupStore();
       try {
         const eventStore = useEventStore();
-        const response = await fetch(`/api/v1/event/${eventStore.selectedEvent!.id}`, {
+        const response = await fetch(`/api/v1/event/${eventStore.id}`, {
           method: 'DELETE'
         });
 
@@ -54,8 +54,8 @@ export default defineComponent({
           popupStore.addPopup(PopupType.Danger, `Failed to Delete Event (${response.status})`);
           return;
         }
-        eventStore.removeEvent(eventStore.selectedEvent);
-        eventStore.selectedEvent = null;
+        eventStore.removeEvent(eventStore.id);
+        eventStore.id = -1;
         popupStore.addPopup(PopupType.Success, 'Event Deleted!');
         this.closeModal();
       } catch (error) {

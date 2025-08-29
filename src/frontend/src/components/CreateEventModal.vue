@@ -137,7 +137,7 @@ export default defineComponent({
         };
         eventStore.addEvent(newEvent);
         eventStore.sortEvents(false);
-        eventStore.selectEvent(newEvent);
+        this.$router.push('/' + result);
 
         popupStore.addPopup(PopupType.Success, 'Event Created!');
         this.closeModal();

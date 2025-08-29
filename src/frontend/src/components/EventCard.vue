@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import CaretRight from './icons/CaretRight.vue';
+import { RouterLink } from 'vue-router';
 </script>
 
 <template>
-  <div class="card mb-3">
+  <RouterLink :to="'/' + $props.event?.id" class="card mb-3">
     <div class="card-body d-flex justify-content-between align-items-center">
       <div>
         <h5 class="card-title">{{ event!.name }}</h5>
@@ -11,7 +12,7 @@ import CaretRight from './icons/CaretRight.vue';
       </div>
       <CaretRight v-if="screenStore.mobile" />
     </div>
-  </div>
+  </RouterLink>
 </template>
 
 <script lang="ts">

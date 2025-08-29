@@ -12,9 +12,9 @@ import EditCarButton from './EditCarButton.vue';
       <div>
         <h3 class="card-title">{{ event?.name }}</h3>
         <h5 class="card-text">
-          <a target="_blank" v-bind:href="'https://maps.google.com/?q=' + event?.location"
-            ><IconPin /> {{ event?.location }}</a
-          >
+          <a target="_blank" v-bind:href="'https://maps.google.com/?q=' + event?.location">
+            <IconPin /> {{ event?.location }}
+          </a>
         </h5>
         <div v-if="screenStore.mobile">
           <h5><b>Start: </b>{{ startTime }}</h5>
@@ -63,16 +63,21 @@ import NeedsRideButton from './NeedsRideButton.vue';
 
 export default defineComponent({
   props: {
-    event: Object as PropType<Event>
+    id: Number,
   },
   data() {
     let screenStore = useScreenStore();
+    let eventStore = useEventStore();
     return {
       historyMode: inject('historyMode'),
-      screenStore
+      eventStore,
+      screenStore,
     };
   },
   computed: {
+    event() {
+      return this.eventStore.selectedEvent;
+    },
     startTime() {
       let data = this.event!.startTime.toLocaleString();
       return format(data, this.screenStore.mobile ? 'MM/dd/yy hh:mm a' : 'LLLL dd, yyyy hh:mm a');
@@ -92,6 +97,9 @@ export default defineComponent({
         ?.filter((car) => car.driver.id === authStore.user?.id)
         .pop();
     }
-  }
+  },
+  created() {
+    this.eventStore.setEventId(this.$props.id!);
+  },
 });
 </script>

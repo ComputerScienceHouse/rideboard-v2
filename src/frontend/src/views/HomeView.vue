@@ -28,7 +28,6 @@ const eventStore = useEventStore();
               v-for="(event, index) in eventStore.events"
               :event="event"
               :key="index"
-              @click="selectEvent(event)"
             />
             <CreateEventButton v-if="!showPast" />
           </div>
@@ -36,15 +35,18 @@ const eventStore = useEventStore();
         <!-- Right column: Display selected card details -->
         <Transition @after-leave="showList = true" name="mobile">
           <div class="noOverflow col-md-8 pb-1" v-if="!screenStore.mobile || showDetail">
-            <EventDetails
-              v-if="eventStore.selectedEvent"
-              :event="eventStore.selectedEvent"
-              :key="eventStore.selectedEvent.id"
+            <!-- 
+              <EventDetails
+              v-if="$props.id"
+              :event="eventStore.getEvent($props.id)"
+              :key="$props.id"
             />
 
             <div v-else>
               <p>Select an Event to see details</p>
             </div>
+            -->
+            <RouterView />
           </div>
         </Transition>
       </div>
@@ -60,7 +62,8 @@ import { useScreenStore } from '@/stores/screen';
 
 export default defineComponent({
   props: {
-    showPast: Boolean
+    showPast: Boolean,
+    id: Number,
   },
   data() {
     let screenStore = useScreenStore();
@@ -89,7 +92,6 @@ export default defineComponent({
         const eventStore = useEventStore();
         eventStore.setEvents(data);
         eventStore.sortEvents(this.showPast);
-        eventStore.selectedEvent = null;
         this.loading = false;
       } catch (error) {
         console.error(error);
@@ -98,7 +100,7 @@ export default defineComponent({
     },
     selectEvent(event: Event) {
       const eventStore = useEventStore();
-      eventStore.selectEvent(event);
+      // eventStore.selectEvent(event);
       if (this.screenStore.width < 768) {
         this.showList = false;
       }
@@ -107,7 +109,7 @@ export default defineComponent({
       this.showDetail = false;
       if (this.screenStore.width < 768) {
         const eventStore = useEventStore();
-        eventStore.selectedEvent = null;
+        // eventStore.selectedEvent = null;
       }
     }
   },

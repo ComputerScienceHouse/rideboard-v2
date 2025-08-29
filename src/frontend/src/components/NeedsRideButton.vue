@@ -38,8 +38,11 @@ export default defineComponent({
   },
   computed: {
     userInCar() {
-      let allCars = this.eventStore.selectedEvent?.cars;
+      let allCars = this.eventStore.selectedEventCars;
       let userId = this.authStore.user?.id;
+
+      if (!allCars) return false;
+
       return allCars!.some(
         (car) => car.riders.some((rider) => rider.id === userId) || car.driver.id === userId
       );
