@@ -8,7 +8,7 @@ function sortByStartDate(a: Event, b: Event) {
 export const useEventStore = defineStore('events', {
   state: () => ({
     events: [] as Event[],
-    id: -1 as number
+    id: null as number | null
   }),
   getters: {
     selectedEvent(state) {
@@ -46,13 +46,6 @@ export const useEventStore = defineStore('events', {
         this.events.splice(index, 1);
       }
     },
-    // selectEvent(event: Event) {
-    //   if (this.selectedEvent == event) {
-    //     return;
-    //   }
-    //   this.selectedEvent = event;
-    //   this.selectedEvent.cars = [];
-    // },
     addCar(car: Car) {
       this.selectedEvent?.cars?.push(car);
     },

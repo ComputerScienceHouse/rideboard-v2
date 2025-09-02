@@ -32,7 +32,7 @@ import EditCarButton from './EditCarButton.vue';
             <EditCarButton v-else :car="userCar" />
           </div>
         </div>
-        <CarTable :eventId="id" :key="event?.id" />
+        <CarTable :eventId="event?.id" :key="event?.id" />
         <h4 class="mr-1">Need a Ride</h4>
         <div v-if="event?.needsRide.length === 0">
           <p><i>No one needs a ride</i></p>

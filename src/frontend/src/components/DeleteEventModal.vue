@@ -55,7 +55,7 @@ export default defineComponent({
           return;
         }
         eventStore.removeEvent(eventStore.id);
-        eventStore.id = -1;
+        eventStore.id = null;
         popupStore.addPopup(PopupType.Success, 'Event Deleted!');
         this.closeModal();
       } catch (error) {
