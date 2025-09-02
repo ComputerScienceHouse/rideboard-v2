@@ -22,6 +22,7 @@ import EditCarButton from './EditCarButton.vue';
         </div>
         <h5 class="card-text" v-else>{{ startTime }} - {{ endTime }}</h5>
         <NeedsRideButton />
+        <ShareEventButton :event-id="id" />
       </div>
       <div class="mt-4 mb-3">
         <div class="d-flex justify-content-between align-items-center">
@@ -31,7 +32,7 @@ import EditCarButton from './EditCarButton.vue';
             <EditCarButton v-else :car="userCar" />
           </div>
         </div>
-        <CarTable :eventId="event?.id" :key="event?.id" />
+        <CarTable :eventId="id" :key="event?.id" />
         <h4 class="mr-1">Need a Ride</h4>
         <div v-if="event?.needsRide.length === 0">
           <p><i>No one needs a ride</i></p>
@@ -60,6 +61,7 @@ import { useAuthStore } from '@/stores/auth';
 import { useScreenStore } from '@/stores/screen';
 import { useEventStore } from '@/stores/events';
 import NeedsRideButton from './NeedsRideButton.vue';
+import ShareEventButton from './ShareEventButton.vue';
 
 export default defineComponent({
   props: {
