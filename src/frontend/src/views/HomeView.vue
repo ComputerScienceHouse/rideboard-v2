@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import EventCard from '@/components/EventCard.vue';
-import EventDetails from '@/components/EventDetails.vue';
 import CreateEventButton from '@/components/CreateEventButton.vue';
 import { useEventStore } from '@/stores/events';
 import Loading from '@/components/LoadingWheel.vue';

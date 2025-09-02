@@ -6,6 +6,8 @@ import { type UserData } from '@/models';
 import EventDetails from '@/components/EventDetails.vue';
 import NoEventDetails from '@/components/NoEventDetails.vue';
 
+import { type Event } from '@/models';
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -47,7 +49,28 @@ const router = createRouter({
           props: true,
         }
       ]
-    }
+    },
+    {
+      path: '/event/:id',
+      beforeEnter: async (to, from) => {
+        const response = await fetch(`/api/v1/event/${to.params.id}`);
+
+        if (response.status != 200) {
+          throw Error('Bad Return Code');
+        }
+
+        const jsonData: Event = await response.json();
+
+        const isInPast = new Date(jsonData.startTime).getTime() < Date.now();
+
+        if (isInPast) {
+          return { path: `/history/${to.params.id}` };
+        } else {
+          return { path: `${to.params.id}` };
+        }
+      },
+      component: NoEventDetails, // This never gets used but has to be here for the beforeEnter to be called
+    },
   ]
 });
 
