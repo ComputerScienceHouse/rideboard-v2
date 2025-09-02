@@ -16,19 +16,19 @@ import { RouterLink } from 'vue-router';
 </template>
 
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, inject, type PropType } from 'vue';
 import { type Event } from '@/models';
 import { format } from 'date-fns';
 import { useScreenStore } from '@/stores/screen';
 
 export default defineComponent({
   props: {
-    event: Object as PropType<Event>,
-    isInPast: Boolean
+    event: Object as PropType<Event>
   },
   data() {
     let screenStore = useScreenStore();
     return {
+      historyMode: inject('historyMode') as Boolean,
       screenStore
     };
   },
@@ -38,9 +38,11 @@ export default defineComponent({
       return data ? format(data, 'MM/dd/yyyy hh:mm a') : 'N/A';
     },
     eventPath() {
-      if (this.$props.isInPast) {
+      if (this.historyMode) {
         return `/history/${this.$props.event?.id}`;
-      } else return `${this.$props.event?.id}`;
+      } else {
+        return `${this.$props.event?.id}`
+      }
     }
   }
 });
