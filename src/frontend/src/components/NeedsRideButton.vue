@@ -4,14 +4,14 @@ import BellSlash from './icons/BellSlash.vue';
 </script>
 
 <template>
-  <button type="button" class="btn btn-danger mb-2" @click="sendDataRemove" v-if="userInNeedsRide">
+  <button type="button" class="btn btn-danger" @click="sendDataRemove" v-if="userInNeedsRide">
     <BellSlash style="vertical-align: text-top" /> No Longer Need Ride ({{
       eventStore.selectedEvent?.needsRide.length
     }})
   </button>
   <button
     type="button"
-    class="btn btn-primary mb-2"
+    class="btn btn-primary"
     @click="sendDataAdd"
     :disabled="userInCar"
     v-else

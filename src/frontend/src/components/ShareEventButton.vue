@@ -1,5 +1,5 @@
 <template>
-  <button type="button" class="btn btn-primary mx-2 mb-2" @click="copyLink">
+  <button type="button" class="btn btn-primary" @click="copyLink">
     Copy Link to Event
   </button>
 </template>

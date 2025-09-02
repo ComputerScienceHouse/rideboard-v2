@@ -21,8 +21,10 @@ import EditCarButton from './EditCarButton.vue';
           <h5><b>End: </b>{{ endTime }}</h5>
         </div>
         <h5 class="card-text" v-else>{{ startTime }} - {{ endTime }}</h5>
-        <NeedsRideButton />
-        <ShareEventButton :event-id="id" />
+        <div class="d-flex flex-wrap gap-2 pb-2" >
+          <NeedsRideButton />
+          <ShareEventButton :event-id="id" />
+        </div>
       </div>
       <div class="mt-4 mb-3">
         <div class="d-flex justify-content-between align-items-center">
