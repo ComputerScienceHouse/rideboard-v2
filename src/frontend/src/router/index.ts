@@ -19,12 +19,12 @@ const router = createRouter({
       children: [
         {
           path: '',
-          component: NoEventDetails,
+          component: NoEventDetails
         },
         {
           path: ':id',
           component: EventDetails,
-          props: true,
+          props: true
         }
       ]
     },
@@ -41,18 +41,18 @@ const router = createRouter({
       children: [
         {
           path: '',
-          component: NoEventDetails,
+          component: NoEventDetails
         },
         {
           path: ':id',
           component: EventDetails,
-          props: true,
+          props: true
         }
       ]
     },
     {
       path: '/event/:id',
-      beforeEnter: async (to, from) => {
+      beforeEnter: async (to, _from) => {
         const response = await fetch(`/api/v1/event/${to.params.id}`);
 
         if (response.status != 200) {
@@ -69,8 +69,8 @@ const router = createRouter({
           return { path: `${to.params.id}` };
         }
       },
-      component: NoEventDetails, // This never gets used but has to be here for the beforeEnter to be called
-    },
+      component: NoEventDetails // This never gets used but has to be here for the beforeEnter to be called
+    }
   ]
 });
 

@@ -11,7 +11,7 @@ import { defineComponent } from 'vue';
 
 export default defineComponent({
   props: {
-    eventId: Number,
+    eventId: Number
   },
   methods: {
     copyLink() {
@@ -24,10 +24,10 @@ export default defineComponent({
         navigator.clipboard.writeText(urlToCopy);
 
         popupStore.addPopup(PopupType.Success, 'Copied url for event to clipboard!');
-      } catch (err) {
+      } catch (_err) {
         popupStore.addPopup(PopupType.Danger, `Failed to copy url ${urlToCopy} to clipboard`);
       }
     }
-  },
-})
+  }
+});
 </script>

@@ -46,8 +46,8 @@ export function validateEvent(title: string, location: string, start: string, en
   if (new Date(start) > new Date(end)) {
     out.push('Start date cannot be after end.');
   }
-  if (new Date(end) < new Date()) {
-    out.push('Event cannot be in the past.');
-  }
+  // if (new Date(end) < new Date()) {
+  //   out.push('Event cannot be in the past.');
+  // }
   return out;
 }

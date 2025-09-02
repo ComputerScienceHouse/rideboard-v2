@@ -24,7 +24,7 @@ import { useScreenStore } from '@/stores/screen';
 export default defineComponent({
   props: {
     event: Object as PropType<Event>,
-    isInPast: Boolean,
+    isInPast: Boolean
   },
   data() {
     let screenStore = useScreenStore();
@@ -40,8 +40,7 @@ export default defineComponent({
     eventPath() {
       if (this.$props.isInPast) {
         return `/history/${this.$props.event?.id}`;
-      }
-      else return `${this.$props.event?.id}`;
+      } else return `${this.$props.event?.id}`;
     }
   }
 });

@@ -28,6 +28,7 @@ const eventStore = useEventStore();
               :event="event"
               :key="index"
               :is-in-past="showPast"
+              @click="selectEvent()"
             />
             <CreateEventButton v-if="!showPast" />
           </div>
@@ -35,17 +36,6 @@ const eventStore = useEventStore();
         <!-- Right column: Display selected card details -->
         <Transition @after-leave="showList = true" name="mobile">
           <div class="noOverflow col-md-8 pb-1" v-if="!screenStore.mobile || showDetail">
-            <!-- 
-              <EventDetails
-              v-if="$props.id"
-              :event="eventStore.getEvent($props.id)"
-              :key="$props.id"
-            />
-
-            <div v-else>
-              <p>Select an Event to see details</p>
-            </div>
-            -->
             <RouterView />
           </div>
         </Transition>
@@ -55,7 +45,7 @@ const eventStore = useEventStore();
 </template>
 
 <script lang="ts">
-import { PopupType, type Event } from '@/models';
+import { PopupType } from '@/models';
 import { defineComponent } from 'vue';
 import { usePopupStore } from '@/stores/popup';
 import { useScreenStore } from '@/stores/screen';
@@ -63,7 +53,7 @@ import { useScreenStore } from '@/stores/screen';
 export default defineComponent({
   props: {
     showPast: Boolean,
-    id: Number,
+    id: Number
   },
   data() {
     let screenStore = useScreenStore();
@@ -98,19 +88,13 @@ export default defineComponent({
         popupStore.addPopup(PopupType.Danger, 'Failed to Get Events. An unknown error occured.');
       }
     },
-    selectEvent(event: Event) {
-      const eventStore = useEventStore();
-      // eventStore.selectEvent(event);
+    selectEvent() {
       if (this.screenStore.width < 768) {
         this.showList = false;
       }
     },
     returnHome() {
       this.showDetail = false;
-      if (this.screenStore.width < 768) {
-        const eventStore = useEventStore();
-        // eventStore.selectedEvent = null;
-      }
     }
   },
   created() {

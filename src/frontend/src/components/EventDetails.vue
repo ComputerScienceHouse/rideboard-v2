@@ -54,8 +54,7 @@ import EditCarButton from './EditCarButton.vue';
 </template>
 
 <script lang="ts">
-import { defineComponent, inject, type PropType } from 'vue';
-import { type Event } from '@/models';
+import { defineComponent, inject } from 'vue';
 import { format } from 'date-fns';
 import { useAuthStore } from '@/stores/auth';
 import { useScreenStore } from '@/stores/screen';
@@ -65,7 +64,7 @@ import ShareEventButton from './ShareEventButton.vue';
 
 export default defineComponent({
   props: {
-    id: Number,
+    id: Number
   },
   data() {
     let screenStore = useScreenStore();
@@ -73,7 +72,7 @@ export default defineComponent({
     return {
       historyMode: inject('historyMode'),
       eventStore,
-      screenStore,
+      screenStore
     };
   },
   computed: {
@@ -102,6 +101,6 @@ export default defineComponent({
   },
   created() {
     this.eventStore.setEventId(this.$props.id!);
-  },
+  }
 });
 </script>
