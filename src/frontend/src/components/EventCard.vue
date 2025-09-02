@@ -41,7 +41,7 @@ export default defineComponent({
       if (this.historyMode) {
         return `/history/${this.$props.event?.id}`;
       } else {
-        return `${this.$props.event?.id}`
+        return `${this.$props.event?.id}`;
       }
     }
   }

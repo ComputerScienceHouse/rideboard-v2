@@ -1,4 +1,9 @@
-import { createRouter, createWebHistory } from 'vue-router';
+import {
+  createRouter,
+  createWebHistory,
+  type RouteLocationNormalizedGeneric,
+  type RouteLocationNormalizedLoadedGeneric
+} from 'vue-router';
 import HomeView from '../views/HomeView.vue';
 import LoginView from '../views/LoginView.vue';
 import { useAuthStore } from '@/stores/auth';
@@ -8,23 +13,57 @@ import NoEventDetails from '@/components/NoEventDetails.vue';
 
 import { type Event } from '@/models';
 
+async function handleEventIdRedirects(
+  to: RouteLocationNormalizedGeneric,
+  _from: RouteLocationNormalizedLoadedGeneric
+) {
+  const response = await fetch(`/api/v1/event/${to.params.id}`);
+
+  if (response.status == 404) {
+    return {
+      path: '/'
+    };
+  }
+
+  if (response.status != 200) {
+    throw Error('Bad Return Code');
+  }
+
+  const jsonData: Event = await response.json();
+
+  const isInPast = new Date(jsonData.startTime).getTime() < Date.now();
+
+  const isGoingToPast = to.path.includes('history');
+
+  if ((isGoingToPast && isInPast) || (!isGoingToPast && !isInPast)) {
+    return true;
+  }
+
+  if (isInPast) {
+    return { path: `/history/${to.params.id}` };
+  } else {
+    return { path: `${to.params.id}` };
+  }
+}
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
-      name: 'home',
       component: HomeView,
       props: { showPast: false },
       children: [
         {
           path: '',
+          name: 'home',
           component: NoEventDetails
         },
         {
           path: ':id',
           component: EventDetails,
-          props: true
+          beforeEnter: handleEventIdRedirects,
+          props: (route) => ({ id: Number(route.params.id) })
         }
       ]
     },
@@ -35,40 +74,25 @@ const router = createRouter({
     },
     {
       path: '/history',
-      name: 'history',
       component: HomeView,
       props: { showPast: true },
       children: [
         {
           path: '',
+          name: 'history',
           component: NoEventDetails
         },
         {
           path: ':id',
           component: EventDetails,
-          props: true
+          beforeEnter: handleEventIdRedirects,
+          props: (route) => ({ id: Number(route.params.id) })
         }
       ]
     },
     {
       path: '/event/:id',
-      beforeEnter: async (to, _from) => {
-        const response = await fetch(`/api/v1/event/${to.params.id}`);
-
-        if (response.status != 200) {
-          throw Error('Bad Return Code');
-        }
-
-        const jsonData: Event = await response.json();
-
-        const isInPast = new Date(jsonData.startTime).getTime() < Date.now();
-
-        if (isInPast) {
-          return { path: `/history/${to.params.id}` };
-        } else {
-          return { path: `${to.params.id}` };
-        }
-      },
+      beforeEnter: handleEventIdRedirects,
       component: NoEventDetails // This never gets used but has to be here for the beforeEnter to be called
     }
   ]
