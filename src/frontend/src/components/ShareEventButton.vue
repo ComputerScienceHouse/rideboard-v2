@@ -1,7 +1,5 @@
 <template>
-  <button type="button" class="btn btn-primary" @click="copyLink">
-    Copy Link to Event
-  </button>
+  <button type="button" class="btn btn-primary" @click="copyLink">Copy Link to Event</button>
 </template>
 
 <script lang="ts">

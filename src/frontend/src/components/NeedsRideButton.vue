@@ -9,13 +9,7 @@ import BellSlash from './icons/BellSlash.vue';
       eventStore.selectedEvent?.needsRide.length
     }})
   </button>
-  <button
-    type="button"
-    class="btn btn-primary"
-    @click="sendDataAdd"
-    :disabled="userInCar"
-    v-else
-  >
+  <button type="button" class="btn btn-primary" @click="sendDataAdd" :disabled="userInCar" v-else>
     <BellAlert style="vertical-align: text-top" /> Need Ride ({{
       eventStore.selectedEvent?.needsRide.length
     }})
