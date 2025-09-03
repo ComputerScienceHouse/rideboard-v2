@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import CaretRight from './icons/CaretRight.vue';
+import { RouterLink } from 'vue-router';
 </script>
 
 <template>
-  <div class="card mb-3">
+  <RouterLink :to="eventPath" class="card mb-3">
     <div class="card-body d-flex justify-content-between align-items-center">
       <div>
         <h5 class="card-title">{{ event!.name }}</h5>
@@ -11,11 +12,11 @@ import CaretRight from './icons/CaretRight.vue';
       </div>
       <CaretRight v-if="screenStore.mobile" />
     </div>
-  </div>
+  </RouterLink>
 </template>
 
 <script lang="ts">
-import { defineComponent, type PropType } from 'vue';
+import { defineComponent, inject, type PropType } from 'vue';
 import { type Event } from '@/models';
 import { format } from 'date-fns';
 import { useScreenStore } from '@/stores/screen';
@@ -27,6 +28,7 @@ export default defineComponent({
   data() {
     let screenStore = useScreenStore();
     return {
+      historyMode: inject('historyMode') as Boolean,
       screenStore
     };
   },
@@ -34,6 +36,13 @@ export default defineComponent({
     formattedStart() {
       let data = this.event?.startTime.toLocaleString();
       return data ? format(data, 'MM/dd/yyyy hh:mm a') : 'N/A';
+    },
+    eventPath() {
+      if (this.historyMode) {
+        return `/history/${this.$props.event?.id}`;
+      } else {
+        return `${this.$props.event?.id}`;
+      }
     }
   }
 });

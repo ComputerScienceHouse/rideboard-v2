@@ -4,18 +4,12 @@ import BellSlash from './icons/BellSlash.vue';
 </script>
 
 <template>
-  <button type="button" class="btn btn-danger mb-2" @click="sendDataRemove" v-if="userInNeedsRide">
+  <button type="button" class="btn btn-danger" @click="sendDataRemove" v-if="userInNeedsRide">
     <BellSlash style="vertical-align: text-top" /> No Longer Need Ride ({{
       eventStore.selectedEvent?.needsRide.length
     }})
   </button>
-  <button
-    type="button"
-    class="btn btn-primary mb-2"
-    @click="sendDataAdd"
-    :disabled="userInCar"
-    v-else
-  >
+  <button type="button" class="btn btn-primary" @click="sendDataAdd" :disabled="userInCar" v-else>
     <BellAlert style="vertical-align: text-top" /> Need Ride ({{
       eventStore.selectedEvent?.needsRide.length
     }})
@@ -38,8 +32,11 @@ export default defineComponent({
   },
   computed: {
     userInCar() {
-      let allCars = this.eventStore.selectedEvent?.cars;
+      let allCars = this.eventStore.selectedEventCars;
       let userId = this.authStore.user?.id;
+
+      if (!allCars) return false;
+
       return allCars!.some(
         (car) => car.riders.some((rider) => rider.id === userId) || car.driver.id === userId
       );

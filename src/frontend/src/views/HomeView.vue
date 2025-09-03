@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import EventCard from '@/components/EventCard.vue';
-import EventDetails from '@/components/EventDetails.vue';
 import CreateEventButton from '@/components/CreateEventButton.vue';
 import { useEventStore } from '@/stores/events';
 import Loading from '@/components/LoadingWheel.vue';
@@ -28,7 +27,7 @@ const eventStore = useEventStore();
               v-for="(event, index) in eventStore.events"
               :event="event"
               :key="index"
-              @click="selectEvent(event)"
+              @click="selectEvent()"
             />
             <CreateEventButton v-if="!showPast" />
           </div>
@@ -36,15 +35,7 @@ const eventStore = useEventStore();
         <!-- Right column: Display selected card details -->
         <Transition @after-leave="showList = true" name="mobile">
           <div class="noOverflow col-md-8 pb-1" v-if="!screenStore.mobile || showDetail">
-            <EventDetails
-              v-if="eventStore.selectedEvent"
-              :event="eventStore.selectedEvent"
-              :key="eventStore.selectedEvent.id"
-            />
-
-            <div v-else>
-              <p>Select an Event to see details</p>
-            </div>
+            <RouterView />
           </div>
         </Transition>
       </div>
@@ -53,14 +44,15 @@ const eventStore = useEventStore();
 </template>
 
 <script lang="ts">
-import { PopupType, type Event } from '@/models';
+import { PopupType } from '@/models';
 import { defineComponent } from 'vue';
 import { usePopupStore } from '@/stores/popup';
 import { useScreenStore } from '@/stores/screen';
 
 export default defineComponent({
   props: {
-    showPast: Boolean
+    showPast: Boolean,
+    id: Number
   },
   data() {
     let screenStore = useScreenStore();
@@ -89,26 +81,19 @@ export default defineComponent({
         const eventStore = useEventStore();
         eventStore.setEvents(data);
         eventStore.sortEvents(this.showPast);
-        eventStore.selectedEvent = null;
         this.loading = false;
       } catch (error) {
         console.error(error);
         popupStore.addPopup(PopupType.Danger, 'Failed to Get Events. An unknown error occured.');
       }
     },
-    selectEvent(event: Event) {
-      const eventStore = useEventStore();
-      eventStore.selectEvent(event);
+    selectEvent() {
       if (this.screenStore.width < 768) {
         this.showList = false;
       }
     },
     returnHome() {
       this.showDetail = false;
-      if (this.screenStore.width < 768) {
-        const eventStore = useEventStore();
-        eventStore.selectedEvent = null;
-      }
     }
   },
   created() {

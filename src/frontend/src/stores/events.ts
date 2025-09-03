@@ -8,10 +8,17 @@ function sortByStartDate(a: Event, b: Event) {
 export const useEventStore = defineStore('events', {
   state: () => ({
     events: [] as Event[],
-    selectedEvent: null as Event | null
+    id: null as number | null
   }),
   getters: {
-    selectedEventCars: (state) => state.selectedEvent?.cars
+    selectedEvent(state) {
+      return state.events.find((event) => {
+        return event.id == state.id;
+      });
+    },
+    selectedEventCars(): Car[] | undefined {
+      return this.selectedEvent?.cars;
+    }
   },
   actions: {
     addEvent(event: Event) {
@@ -20,28 +27,24 @@ export const useEventStore = defineStore('events', {
     setEvents(events: Event[]) {
       this.events = events;
     },
+    setEventId(id: number) {
+      this.id = id;
+    },
     sortEvents(past: Boolean) {
       this.events.sort(sortByStartDate);
 
       if (past) {
-          this.events.reverse();
+        this.events.reverse();
       }
     },
-    removeEvent(event: Event | null) {
-      if (event == null) {
+    removeEvent(id: number | null) {
+      if (id == null) {
         return;
       }
-      const index = this.events.indexOf(event);
+      const index = this.events.findIndex((event) => event.id == id);
       if (index > -1) {
         this.events.splice(index, 1);
       }
-    },
-    selectEvent(event: Event) {
-      if (this.selectedEvent == event) {
-        return;
-      }
-      this.selectedEvent = event;
-      this.selectedEvent.cars = [];
     },
     addCar(car: Car) {
       this.selectedEvent?.cars?.push(car);
