@@ -127,7 +127,7 @@ export default defineComponent({
           name: this.eventTitle,
           location: this.eventLocation,
           startTime: new Date(this.eventStart).toISOString(),
-          endTime: new Date(this.eventStart).toISOString()
+          endTime: new Date(this.eventEnd).toISOString()
         };
         const eventStore = useEventStore();
         const response = await fetch(`/api/v1/event/${eventStore.selectedEvent!.id}`, {
