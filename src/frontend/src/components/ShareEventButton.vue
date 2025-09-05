@@ -14,9 +14,8 @@ export default defineComponent({
   methods: {
     copyLink() {
       const popupStore = usePopupStore();
-      const baseUrl = window.location.host;
 
-      const urlToCopy = baseUrl + '/event/' + this.eventId;
+      const urlToCopy = window.location.href;
 
       try {
         navigator.clipboard.writeText(urlToCopy);

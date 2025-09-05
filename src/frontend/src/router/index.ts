@@ -42,7 +42,7 @@ async function handleEventIdRedirects(
   if (isInPast) {
     return { path: `/history/${to.params.id}` };
   } else {
-    return { path: `${to.params.id}` };
+    return { path: `/${to.params.id}` };
   }
 }
 
@@ -89,11 +89,6 @@ const router = createRouter({
           props: (route) => ({ id: Number(route.params.id) })
         }
       ]
-    },
-    {
-      path: '/event/:id',
-      beforeEnter: handleEventIdRedirects,
-      component: NoEventDetails // This never gets used but has to be here for the beforeEnter to be called
     }
   ]
 });
