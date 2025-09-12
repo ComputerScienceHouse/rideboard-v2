@@ -51,4 +51,8 @@ tr:hover > * {
 .rotated {
   transform: rotate(90deg);
 }
+
+tr {
+  cursor: pointer;
+}
 </style>
