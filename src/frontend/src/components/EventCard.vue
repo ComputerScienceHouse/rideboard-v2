@@ -52,4 +52,7 @@ export default defineComponent({
 .card {
   cursor: pointer;
 }
+.card-title {
+  white-space: normal;
+}
 </style>
