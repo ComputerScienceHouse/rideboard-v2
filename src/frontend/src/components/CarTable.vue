@@ -10,7 +10,7 @@ import BlankIcon from './icons/BlankIcon.vue';
 <template>
   <Loading v-if="loading" />
   <div v-else>
-    <table class="table whitespace-normal">
+    <table class="table">
       <thead>
         <tr>
           <th scope="col" @click="changeSort('driver')">
