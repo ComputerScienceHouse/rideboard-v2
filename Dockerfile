@@ -1,4 +1,4 @@
-FROM rust:1.79-bookworm AS base
+FROM rust:bookworm AS base
 RUN apt update && apt install -y libpq-dev
 
 FROM base AS chef
