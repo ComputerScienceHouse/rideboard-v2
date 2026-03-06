@@ -41,6 +41,5 @@ main {
 
 body {
   padding-top: 70px;
-  overflow: scroll;
 }
 </style>
